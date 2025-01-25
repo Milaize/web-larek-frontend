@@ -2905,6 +2905,11 @@ jest-worker@^27.4.5:
 jiti@^1.18.2:
   version "1.18.2"
 
+jquery@^3.7.1:
+  version "3.7.1"
+  resolved "https://registry.npmjs.org/jquery/-/jquery-3.7.1.tgz"
+  integrity sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==
+
 js-sdsl@^4.1.4:
   version "4.4.0"
 

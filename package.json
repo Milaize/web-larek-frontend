@@ -43,5 +43,17 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier ./src --write",
     "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Milaize/web-larek-frontend.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/Milaize/web-larek-frontend/issues"
+  },
+  "homepage": "https://github.com/Milaize/web-larek-frontend#readme",
+  "dependencies": {
+    "jquery": "^3.7.1"
   }
 }
