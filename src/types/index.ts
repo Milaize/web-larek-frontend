@@ -5,7 +5,7 @@ interface ProductAPI {
     title: string;
     description: string;
     category: string;
-    price: number;
+    price: number | null; //цена может прийти пустая
     image: string;
   }
   
@@ -55,7 +55,6 @@ interface ProductAPI {
 
   interface ApiClient {
     getProducts(): Promise<ProductAPI[]>;
-    getBasket(): Promise<BasketItemAPI[]>;
     addToBasket(productId: string, quantity: number): Promise<void>;
     removeFromBasket(productId: string): Promise<void>;
     createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>;
@@ -67,12 +66,12 @@ interface ProductAPI {
     fetchProducts(): Promise<ProductUI[]>;
     getProductById(id: string): Promise<ProductUI>;
   }
-  
+
   interface BasketModel {
-    fetchBasket(): Promise<BasketItemUI[]>;
+    getBasket(): BasketItemUI[];
     addItemToBasket(productId: string): Promise<void>;
     removeItemFromBasket(productId: string): Promise<void>;
-    getTotalPrice(): Promise<string>;
+    getTotalPrice(): string;
   }
   
   interface OrderModel {
