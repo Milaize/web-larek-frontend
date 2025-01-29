@@ -39,7 +39,7 @@ interface ProductAPI {
   }
   
   interface BasketItemUI {
-    index: number;
+    id: string;
     title: string;
     price: string; 
     quantity: number;
@@ -55,28 +55,30 @@ interface ProductAPI {
 
   interface ApiClient {
     getProducts(): Promise<ProductAPI[]>;
-    addToBasket(productId: string, quantity: number): Promise<void>;
-    removeFromBasket(productId: string): Promise<void>;
+    addToBasket(productId: string, quantity: number): Promise<BasketItemAPI[]>;
+    removeFromBasket(productId: string): Promise<BasketItemAPI[]>;
     createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>;
   }
 
 // Интерфейсы модели данных
 
   interface ProductModel {
-    fetchProducts(): Promise<ProductUI[]>;
-    getProductById(id: string): Promise<ProductUI>;
+    setProducts(products: ProductUI[]): void;
+    getProductById(id: string): ProductUI | undefined;
   }
 
   interface BasketModel {
     getBasket(): BasketItemUI[];
-    addItemToBasket(productId: string): Promise<void>;
-    removeItemFromBasket(productId: string): Promise<void>;
+    addItemToBasket(productId: string): Promise<BasketItemUI[]>; 
+    removeItemFromBasket(productId: string): Promise<BasketItemUI[]>;
     getTotalPrice(): string;
+    clearBasket(): Promise<void>;
   }
   
   interface OrderModel {
-    createOrder(user: UserAPI): Promise<OrderUI>;
-    fetchOrder(id: string): Promise<OrderUI>;
+    setOrderData(user: UserAPI, basket: BasketItemUI[]): void;
+    validateOrder(): string[];
+    createOrder(): OrderUI | null;
   }
 
 //   Интерфейсы отображений
@@ -95,6 +97,10 @@ interface ProductAPI {
     renderOrderForm(): void;
     renderSuccessMessage(order: OrderUI): void;
     showFormErrors(errors: string[]): void;
+  }
+
+  interface SuccessMessageView {
+    render(message: string): void;
   }
 
 // Интерфейсы базовых классов
@@ -153,20 +159,20 @@ interface ProductAPI {
     getOrderSuccessTemplate(): HTMLElement;
   }
 
-// Контроллеры
+// Презентеры
 
-  interface ProductController {
-    showProductList(): Promise<void>;
-    showProductDetails(productId: string): Promise<void>;
-  }
-  
-  interface BasketController {
-    showBasket(): Promise<void>;
-    handleAddToBasket(productId: string): Promise<void>;
-    handleRemoveFromBasket(productId: string): Promise<void>;
-  }
-  
-  interface OrderController {
-    showOrderForm(): Promise<void>;
-    handleOrderSubmit(data: UserAPI): Promise<void>;
-  }
+interface ProductPresenter {
+  showProductList(): Promise<void>;
+  showProductDetails(productId: string): Promise<void>;
+}
+
+interface BasketPresenter {
+  showBasket(): Promise<void>;
+  handleAddToBasket(productId: string): Promise<void>;
+  handleRemoveFromBasket(productId: string): Promise<void>;
+}
+
+interface OrderPresenter {
+  showOrderForm(): Promise<void>;
+  handleOrderSubmit(data: UserAPI): Promise<void>;
+}

@@ -45,21 +45,20 @@ yarn build
 
 Приложение основано на паттерне проектирования MVP (Model-View-Presenter).  
 В рамках этой архитектуры:  
-* Модель (Model) отвечает за работу с данными (получение, преобразование, хранение).  
-* Представление (View) отвечает за отображение данных на экране.  
-* Презентер (Presenter) взаимодействует с моделью и представлением, реализует логику приложения и обновляет интерфейс на основе данных  
+* Модель (Model) отвечает за хранение данных.  
+* Представление (View) отображает данные и реагирует на события пользователя.  
+* Презентер (Presenter) обрабатывает пользовательские события, запрашивает данные из API и обновляет модель.  
 
 ### Классы с группировкой по слоям.  
 **1. Слой модели:**  
 
 1.1. BasketModel  
+Хранит состояние корзины. 
 Поля:  
 
-* basket: BasketItemUI[] - локальное состояние корзины, массив товаров.  
+* basket: BasketItemUI[] - массив товаров в корзине.  
 
 * total: string - общая стоимость корзины в форматированной строке "1000 синапсов".  
-
-* apiClient: ApiClient - объект для взаимодействия с API.  
 
 * formatter: Formatter - объект для форматирования данных.  
 
@@ -68,40 +67,46 @@ yarn build
 * getBasket(): BasketItemUI[] - возвращает текущее состояние корзины.  
 _Задача: управление локальным состоянием корзины._  
 
-* addItemToBasket(productId: string): Promise<void> - добавляет товар в корзину и синхронизирует это с сервером.  
-_Задача: обновить состояние корзины на клиенте и отправить запрос на сервер._  
+* addItemToBasket(product: BasketItemUI): void — добавляет товар в локальную корзину.   
+_Задача: обновить состояние корзины на клиенте._  
 
-* removeItemFromBasket(productId: string): Promise<void> - удаляет товар из корзины и синхронизирует это с сервером.  
-_Задача: обновить состояние корзины на клиенте и отправить запрос на сервер._  
+* removeItemFromBasket(id: string): void; - удаляет товар из корзины.  
+_Задача: обновить состояние корзины на клиенте._  
 
 * getTotalPrice(): string - возвращает общую стоимость корзины в форматированном виде.  
 _Задача: рассчитать и отобразить стоимость всех товаров._  
 
 1.2. OrderModel  
+Хранит данные формы заказа.  
 Поля:  
 
-* apiClient: ApiClient - объект для взаимодействия с API.  
 * formatter: Formatter - объект для форматирования статусов и цен.  
+* orderData: UserAPI | null — данные пользователя, оформляющего заказ.  
+* basketItems: BasketItemUI[] — товары в заказе.  
 
-Методы:  
+Методы: 
 
-* createOrder(user: UserAPI): Promise<OrderUI> - отправляет данные о заказе на сервер и возвращает объект заказа.  
-_Задача: создание нового заказа._  
+setOrderData(user: UserAPI, basket: BasketItemUI[]): void — сохраняет данные формы заказа.  
+_Задача: сохраняет данные формы заказа._  
 
-* fetchOrder(id: string): Promise<OrderUI> - получает данные заказа с сервера по идентификатору.  
-_Задача: получить информацию о конкретном заказе._  
+validateOrder(): string[] — проверяет корректность данных заказа.  
+_Задача: убедиться, что данные корректны перед оформлением заказа._  
+
+createOrder(): OrderUI | null — формирует объект заказа.  
+_Задача: подготовить данные заказа для отправки._  
 
 1.3. ProductModel  
 Поля:  
-
+* products: ProductUI[] — массив товаров.  
 * apiClient: ApiClient - объект для взаимодействия с API.  
 
 Методы:  
 
-* fetchProducts(): Promise<ProductUI[]> - получает список товаров с сервера.  
-_Задача: загрузить данные каталога._  
-* getProductById(id: string): Promise<ProductUI> - получает данные конкретного товара.  
-_Задача: предоставить информацию для детального просмотра._  
+* setProducts(products: ProductUI[]): void
+_Задача: сохранить список товаров._    
+
+* getProductById(id: string): ProductUI | undefined - получает данные конкретного товара.  
+_Задача:  получать данные конкретного товара по ID._  
 
 **2. Слой представления:**  
 
@@ -125,14 +130,12 @@ _Задача: информировать пользователя о том, ч
 
 Методы:  
 
-* renderOrderForm(): void - отображает форму оформления заказа.  
-_Задача: позволить пользователю ввести данные заказа._  
+* renderOrderForm(): void  
+_Задача: отображает форму._  
 
-* renderSuccessMessage(order: OrderUI): void - отображает сообщение об успешном оформлении заказа.  
-_Задача: проинформировать пользователя об успешном заказе._  
+* showFormErrors(errors: string[]): void   
 
-* showFormErrors(errors: string[]): void - отображает ошибки валидации формы.  
-_Задача: помочь пользователю исправить ошибки._  
+_Задача: отображает ошибки валидации формы._  
 
 2.3. ProductView  
 Поля:  
@@ -147,75 +150,69 @@ _Задача: отрисовать каталог товаров._
 * renderProductDetails(product: ProductUI): void - отображает подробную информацию о товаре.
 _Задача: показать информацию выбранного товара._  
 
+2.4 SuccessMessageView  
+
+Методы:  
+render(message: string): void  
+_Задача: отображает сообщение об успешной оплате._  
+
 **3. Слой презентера:**  
 
-3.1 BasketController  
-Поля:  
+3.1 BasketPresenter 
+Обрабатывает корзину.  
 
-* basketModel: BasketModel - объект модели корзины.  
-* basketView: BasketView - объект представления корзины.  
+Поля:
 
-Методы:  
+* model: BasketModel
+* view: BasketView
+* apiClient: ApiClient
 
-* showBasket(): Promise<void> - отображает корзину.  
-_Задача: связать данные корзины с её представлением._  
+Методы:
 
-* handleAddToBasket(productId: string): Promise<void> - обрабатывает добавление товара в корзину.  
-_Задача: обновить данные корзины и её отображение._  
+* init(): void — загружает данные корзины.
+* handleAddToBasket(product: BasketItemUI): void — добавляет товар.
+* handleRemoveFromBasket(productId: string): void — удаляет товар.
 
-* handleRemoveFromBasket(productId: string): Promise<void> - обрабатывает удаление товара из корзины.  
-_Задача: обновить данные корзины и её отображение._  
+3.2 OrderPresenter  
+Обрабатывает заказ.  
 
-3.2 OrderController
-Поля:  
+Поля:
 
-* orderModel: OrderModel - объект модели заказа.  
-* orderView: OrderView - объект представления заказа.  
-
-Методы:  
-
-* showOrderForm(): Promise<void> - отображает форму заказа.  
-_Задача: связать представление формы с её логикой._  
-
-* handleOrderSubmit(data: UserAPI): Promise<void> - обрабатывает отправку данных формы.  
-_Задача: создать заказ и отобразить сообщение об успешном заказе._  
-
-3.3 ProductController  
-Поля:  
-
-* productModel: ProductModel - объект модели товаров.  
-* productView: ProductView - объект представления товаров.  
+* model: OrderModel  
+* view: OrderView  
+* apiClient: ApiClient  
 
 Методы:  
 
-* showProductList(): Promise<void> - отображает каталог товаров.  
-_Задача: связать данные товаров с их представлением._  
+* handleSubmit(data: Partial<OrderUI>): void — валидирует и отправляет заказ.  
 
-* showProductDetails(productId: string): Promise<void> - отображает детали выбранного товара.  
-_Задача: показать информацию о выбранном товаре._  
+3.3 ProductPresenter
+Обрабатывает каталог.  
+
+Поля:  
+
+* model: ProductModel  
+* view: ProductView  
+* apiClient: ApiClient  
+
+Методы:
+
+* init(): void — загружает каталог.
+* handleSelectProduct(id: string): void — отображает детали товара.
 
 ### Пользовательские события.  
 1. product:addToBasket  
 Описание: Пользователь добавляет товар в корзину.
-Обработчик: BasketController.handleAddToBasket(productId)  
+Обработчик: BasketPresenter.handleAddToBasket(product)
 
 2. basket:removeItem  
 Описание: Пользователь удаляет товар из корзины.
-Обработчик: BasketController.handleRemoveFromBasket(productId)  
+Обработчик: BasketPresenter.handleRemoveFromBasket(productId)
 
-3. basket:update
-Описание: Обновление состояния корзины.
-Обработчик: BasketView.renderBasket(items, total)  
-
-4. order:submitted  
+3. order:submitted  
 Описание: Пользователь отправляет заказ.
-Обработчик: OrderController.handleOrderSubmit(data)  
+Обработчик: OrderPresenter.handleSubmit(data)
 
-5. order:success
-Описание: Успешное создание заказа.
-Обработчик: OrderView.renderSuccessMessage(order)  
-
-Вышеперечисленные события связывают слои модели, представления и контроллера, обеспечивая динамическое поведение приложения.  
 
 #### В рамках архитектуры приложения некоторые сущности имеют модель данных и представления, другим же достаточно только представления.  
 
