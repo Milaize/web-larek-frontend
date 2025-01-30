@@ -57,7 +57,8 @@ interface ProductAPI {
     getProducts(): Promise<ProductAPI[]>;
     addToBasket(productId: string, quantity: number): Promise<BasketItemAPI[]>;
     removeFromBasket(productId: string): Promise<BasketItemAPI[]>;
-    createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>;
+    createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>; 
+    sendOrder(order: OrderAPI): Promise<OrderAPI>;
   }
 
 // Интерфейсы модели данных
@@ -76,10 +77,10 @@ interface ProductAPI {
   }
   
   interface OrderModel {
-    setOrderData(user: UserAPI, basket: BasketItemUI[]): void;
-    validateOrder(): string[];
-    createOrder(): OrderUI | null;
-  }
+    setOrderData(user: UserAPI): void;
+    validateOrder(): string[]; 
+    createOrder(basket: BasketItemUI[]): OrderUI | null;
+}
 
 //   Интерфейсы отображений
 
@@ -174,5 +175,6 @@ interface BasketPresenter {
 
 interface OrderPresenter {
   showOrderForm(): Promise<void>;
-  handleOrderSubmit(data: UserAPI): Promise<void>;
+  handleOrderSubmit(user: UserAPI): Promise<void>;
+  prepareAndSendOrder(): Promise<void>; //объединить данные заказа и корзины
 }
