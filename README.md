@@ -265,7 +265,7 @@ _олучает данные из OrderModel и BasketModel, затем пере
 Представление: управляет отображением полей, ошибок и переходами между этапами оформления.  
 ```typescript
  interface OrderModel {
-    createOrder(user: UserAPI, basket: BasketItemUI[]): OrderUI;
+    getOrder(user: UserAPI, basket: BasketItemUI[]): OrderUI;
 }
 ```   
 

@@ -1,6 +1,6 @@
 // Входные данные
 
-interface ProductAPI {
+export interface ProductAPI {
     id: string;
     title: string;
     description: string;
@@ -8,20 +8,25 @@ interface ProductAPI {
     price: number | null; //цена может прийти пустая
     image: string;
   }
+
+  export type ApiListResponse<Type> = {
+    total: number;
+    items: Type[];
+  }
   
-  interface BasketItemAPI {
+  export interface BasketItemAPI {
     productId: string;
     quantity: number;
   }
   
-  interface OrderAPI {
+  export interface OrderAPI {
     id: string;
     items: BasketItemAPI[];
     total: number;
     status: "pending" | "paid" | "shipped";
   }
   
-  interface UserAPI {
+  export interface UserAPI {
     email: string;
     phone: string;
     address: string;
@@ -29,7 +34,7 @@ interface ProductAPI {
 
 //  Выходные данные
 
-  interface ProductUI {
+  export interface ProductUI {
     id: string;
     title: string;
     category: string;
@@ -38,14 +43,14 @@ interface ProductAPI {
     description?: string; 
   }
   
-  interface BasketItemUI {
+  export interface BasketItemUI {
     id: string;
     title: string;
     price: string; 
     quantity: number;
   }
   
-  interface OrderUI {
+  export interface OrderUI {
     id: string;
     total: string; 
     items: BasketItemUI[];
@@ -53,8 +58,8 @@ interface ProductAPI {
   }
 //   Интерфейс API-клиента
 
-  interface ApiClient {
-    getProducts(): Promise<ProductAPI[]>;
+  export interface ApiClient {
+    getProducts(): Promise<ProductUI[]>;
     addToBasket(productId: string, quantity: number): Promise<BasketItemAPI[]>;
     removeFromBasket(productId: string): Promise<BasketItemAPI[]>;
     createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>; 
@@ -79,22 +84,22 @@ interface ProductAPI {
   interface OrderModel {
     setOrderData(user: UserAPI): void;
     validateOrder(): string[]; 
-    createOrder(basket: BasketItemUI[]): OrderUI | null;
+    getOrder(user: UserAPI, basket: BasketItemUI[]): OrderUI;
 }
 
 //   Интерфейсы отображений
 
-  interface ProductView {
+  export interface ProductView {
     renderProductList(products: ProductUI[]): void;
     renderProductDetails(product: ProductUI): void;
   }
   
-  interface BasketView {
+  export interface BasketView {
     renderBasket(items: BasketItemUI[], total: string): void;
     showEmptyBasketMessage(): void;
   }
   
-  interface OrderView {
+  export interface OrderView {
     renderOrderForm(): void;
     renderSuccessMessage(order: OrderUI): void;
     showFormErrors(errors: string[]): void;
@@ -112,7 +117,7 @@ interface ProductAPI {
     emit(event: string, ...args: any[]): void;
   }
   
-  interface Modal {
+  export interface Modal {
     open(content: HTMLElement): void;
     close(): void;
     setTitle(title: string): void;
@@ -122,7 +127,7 @@ interface ProductAPI {
     renderCard(product: ProductUI): HTMLElement;
   }
   
-  interface Form {
+  export interface Form {
     validate(): boolean;
     getData(): Record<string, string>;
     render(): HTMLElement;
@@ -147,7 +152,7 @@ interface ProductAPI {
 
 //   Форматировщик
 
-  interface Formatter {
+  export interface Formatter {
     formatPrice(price: number): string; // Пример: 1000 -> "1 000 синапсов"
     formatStatus(status: string): string; // Пример: "pending" -> "В обработке"
   }
