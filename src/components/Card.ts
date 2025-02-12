@@ -1,7 +1,6 @@
 import { Component } from './base/Component';
-import { ProductUI, BasketItemUI} from "../types/index";
+import { ProductUI, BasketItemUI } from "../types/index";
 import { ensureElement } from "../utils/utils";
-
 
 class Card extends Component<ProductUI> {
     protected _category: HTMLElement;
@@ -42,7 +41,7 @@ class Card extends Component<ProductUI> {
     }
 
     set price(value: string) {
-        this.setText(this._price, value ? `${value} синапсов` : "Бесценно");
+        this.setText(this._price, value);
     }
 }
 

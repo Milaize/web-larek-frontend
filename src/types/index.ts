@@ -1,6 +1,6 @@
 // Входные данные
 
-export interface ProductAPI {
+export interface ProductApi {
     id: string;
     title: string;
     description: string;
@@ -14,19 +14,19 @@ export interface ProductAPI {
     items: Type[];
   }
   
-  export interface BasketItemAPI {
+  export interface BasketItemApi {
     productId: string;
     quantity: number;
   }
   
-  export interface OrderAPI {
+  export interface OrderApi {
     id: string;
-    items: BasketItemAPI[];
+    items: BasketItemApi[];
     total: number;
     status: "pending" | "paid" | "shipped";
   }
   
-  export interface UserAPI {
+  export interface UserApi {
     email: string;
     phone: string;
     address: string;
@@ -60,10 +60,10 @@ export interface ProductAPI {
 
   export interface ApiClient {
     getProducts(): Promise<ProductUI[]>;
-    addToBasket(productId: string, quantity: number): Promise<BasketItemAPI[]>;
-    removeFromBasket(productId: string): Promise<BasketItemAPI[]>;
-    createOrder(user: UserAPI, items: BasketItemAPI[]): Promise<OrderAPI>; 
-    sendOrder(order: OrderAPI): Promise<OrderAPI>;
+    addToBasket(productId: string, quantity: number): Promise<BasketItemApi[]>;
+    removeFromBasket(productId: string): Promise<BasketItemApi[]>;
+    createOrder(user: UserApi, items: BasketItemApi[]): Promise<OrderApi>; 
+    sendOrder(order: OrderApi): Promise<OrderApi>;
   }
 
 // Интерфейсы модели данных
@@ -82,9 +82,9 @@ export interface ProductAPI {
   }
   
   interface OrderModel {
-    setOrderData(user: UserAPI): void;
+    setOrderData(user: UserApi): void;
     validateOrder(): string[]; 
-    getOrder(user: UserAPI, basket: BasketItemUI[]): OrderUI;
+    getOrder(user: UserApi, basket: BasketItemUI[]): OrderUI;
 }
 
 //   Интерфейсы отображений
@@ -117,10 +117,8 @@ export interface ProductAPI {
     emit(event: string, ...args: any[]): void;
   }
   
-  export interface Modal {
-    open(content: HTMLElement): void;
-    close(): void;
-    setTitle(title: string): void;
+  export interface ModalData {
+    content: HTMLElement;
   }
   
   interface Card {
@@ -146,7 +144,7 @@ export interface ProductAPI {
     "product:addToBasket": { productId: string };
     "basket:removeItem": { productId: string };
     "basket:update": { items: BasketItemUI[]; total: string };
-    "order:submitted": { user: UserAPI; items: BasketItemUI[] };
+    "order:submitted": { user: UserApi; items: BasketItemUI[] };
     "order:success": { order: OrderUI };
   }
 
@@ -180,6 +178,6 @@ interface BasketPresenter {
 
 interface OrderPresenter {
   showOrderForm(): Promise<void>;
-  handleOrderSubmit(user: UserAPI): Promise<void>;
+  handleOrderSubmit(user: UserApi): Promise<void>;
   prepareAndSendOrder(): Promise<void>; //объединить данные заказа и корзины
 }

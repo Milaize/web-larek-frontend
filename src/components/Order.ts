@@ -1,9 +1,9 @@
 import { Form } from "./common/Form";
-import { UserAPI } from "../types/index";
+import { UserApi } from "../types/index";
 import { IEvents } from "./base/events";
 import { ensureAllElements } from "../utils/utils";
 
-export class Order extends Form<UserAPI> {
+export class Order extends Form<UserApi> {
   protected _buttons: HTMLButtonElement[];
 
   constructor(container: HTMLFormElement, events: IEvents) {
@@ -35,7 +35,7 @@ export class Order extends Form<UserAPI> {
     (this.container.elements.namedItem("email") as HTMLInputElement).value = value;
   }
 
-  getOrderData(): UserAPI {
+  getOrderData(): UserApi {
     return {
       email: (this.container.elements.namedItem("email") as HTMLInputElement).value,
       phone: (this.container.elements.namedItem("phone") as HTMLInputElement).value,

@@ -1,12 +1,12 @@
 import { Model } from "./base/Model";
 import { IEvents } from "./base/events";
-import { ProductUI, BasketItemUI, OrderUI, UserAPI, OrderAPI } from "../types/index";
+import { ProductUI, BasketItemUI, OrderUI, UserApi, OrderApi } from "../types/index";
 
-export class AppState extends Model<AppState> {
+export class AppData extends Model<AppData> {
   private products: ProductUI[] = [];
   private basket: BasketItemUI[] = [];
-  private order: OrderAPI = { id: "", items: [], total: 0, status: "pending" };
-  private user: UserAPI = { email: "", phone: "", address: "" };
+  private order: OrderApi = { id: "", items: [], total: 0, status: "pending" };
+  private user: UserApi = { email: "", phone: "", address: "" };
   
   constructor(events: IEvents) {
     super({}, events);
@@ -49,7 +49,7 @@ export class AppState extends Model<AppState> {
     return this.basket.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0).toFixed(2);
   }
 
-  setOrderData(user: UserAPI) {
+  setOrderData(user: UserApi) {
     this.user = user;
     this.emitChanges("order:userDataUpdated", this.user);
   }
