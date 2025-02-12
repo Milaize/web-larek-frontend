@@ -1,6 +1,6 @@
 import { Model } from "./base/Model";
 import { IEvents } from "./base/events";
-import { ProductUI, BasketItemUI, OrderUI, UserApi, OrderApi } from "../types/index";
+import { ProductUI, BasketItemUI, OrderUI, UserApi, OrderApi, BasketItemApi } from "../types/index";
 
 export class AppData extends Model<AppData> {
   private products: ProductUI[] = [];
@@ -49,9 +49,9 @@ export class AppData extends Model<AppData> {
     return this.basket.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0).toFixed(2);
   }
 
-  setOrderData(user: UserApi) {
-    this.user = user;
-    this.emitChanges("order:userDataUpdated", this.user);
+  setOrderData(data: Partial<OrderApi>) {
+    this.order = { ...this.order, ...data };
+    this.emitChanges("order:updated", this.order);
   }
 
   validateOrder(): string[] {
@@ -62,12 +62,24 @@ export class AppData extends Model<AppData> {
     return errors;
   }
 
-  getOrder(): OrderUI {
+  getOrder(): OrderApi {
     return {
-      id: this.order.id,
-      total: this.getTotalPrice(),
-      items: this.basket,
-      status: this.order.status,
+        id: this.order.id,
+        total: parseFloat(this.getTotalPrice()),
+        items: this.basket.map(item => ({
+            productId: item.id,
+            quantity: item.quantity
+        })),
+        status: this.order.status,
+        payment: this.order.payment
     };
+  }
+
+  setOrderItems(items: BasketItemApi[]) {
+    this.order.items = items;
+  }
+
+  setPaymentType(payment: string) {
+    this.order.payment = payment;
   }
 }

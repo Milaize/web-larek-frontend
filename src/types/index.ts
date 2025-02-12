@@ -24,6 +24,7 @@ export interface ProductApi {
     items: BasketItemApi[];
     total: number;
     status: "pending" | "paid" | "shipped";
+    payment?: string;
   }
   
   export interface UserApi {
