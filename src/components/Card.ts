@@ -1,6 +1,7 @@
 import { Component } from './base/Component';
 import { ProductUI, BasketItemUI } from "../types/index";
 import { ensureElement } from "../utils/utils";
+import { IEvents } from "./base/events";
 
 class Card extends Component<ProductUI> {
     protected _category: HTMLElement;
@@ -41,7 +42,11 @@ class Card extends Component<ProductUI> {
     }
 
     set price(value: string) {
-        this.setText(this._price, value);
+        if (value === 'Бесплатно') {
+            this.setText(this._price, value);
+        } else {
+            this.setText(this._price, `${value} синапсов`);
+        }
     }
 }
 
@@ -70,17 +75,18 @@ class CardBasket extends Component<BasketItemUI> {
     protected _title: HTMLElement;
     protected _price: HTMLElement;
     protected _button: HTMLElement;
+    protected _item: BasketItemUI;
 
-    constructor(container: HTMLElement, onClick?: () => void) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
         this._index = ensureElement<HTMLElement>(".basket__item-index", container);
         this._title = ensureElement<HTMLElement>(".card__title", container);
         this._price = ensureElement<HTMLElement>(".card__price", container);
-        this._button = ensureElement<HTMLElement>(".card__button", container);
+        this._button = ensureElement<HTMLElement>(".basket__item-delete", container);
 
-        if (onClick) {
-            this._button.addEventListener("click", onClick);
-        }
+        this._button.addEventListener('click', () => {
+            events.emit('card:remove', this._item);
+        });
     }
 
     set index(value: number) {
@@ -92,7 +98,17 @@ class CardBasket extends Component<BasketItemUI> {
     }
 
     set price(value: string) {
-        this.setText(this._price, value ? `${value} синапсов` : "Бесценно");
+        if (value === 'Бесплатно') {
+            this.setText(this._price, value);
+        } else {
+            this.setText(this._price, value);
+        }
+    }
+
+    setData(item: BasketItemUI): void {
+        this._item = item;
+        this.title = item.title;
+        this.price = item.price;
     }
 }
 

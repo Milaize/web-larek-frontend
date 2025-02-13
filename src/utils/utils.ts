@@ -136,3 +136,39 @@ export function createElement<
     }
     return element;
 }
+
+export function debounce<T extends (...args: any[]) => void>(
+    fn: T,
+    delay: number
+): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    
+    return function (...args: Parameters<T>) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+export function formatPhoneNumber(value: string): string {
+    // Удаляем все нецифровые символы
+    const numbers = value.replace(/\D/g, '');
+    
+    // Ограничиваем длину до 11 цифр
+    const limitedNumbers = numbers.substring(0, 11);
+    
+    // Форматируем номер
+    if (limitedNumbers.length > 0) {
+        if (limitedNumbers.length <= 1) {
+            return `+7 (${limitedNumbers}`;
+        } else if (limitedNumbers.length <= 4) {
+            return `+7 (${limitedNumbers.substring(1)}`;
+        } else if (limitedNumbers.length <= 7) {
+            return `+7 (${limitedNumbers.substring(1, 4)}) ${limitedNumbers.substring(4)}`;
+        } else if (limitedNumbers.length <= 9) {
+            return `+7 (${limitedNumbers.substring(1, 4)}) ${limitedNumbers.substring(4, 7)}-${limitedNumbers.substring(7)}`;
+        } else {
+            return `+7 (${limitedNumbers.substring(1, 4)}) ${limitedNumbers.substring(4, 7)}-${limitedNumbers.substring(7, 9)}-${limitedNumbers.substring(9)}`;
+        }
+    }
+    return '+7 (';
+}

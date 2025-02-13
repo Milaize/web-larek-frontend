@@ -25,6 +25,9 @@ export interface ProductApi {
     total: number;
     status: "pending" | "paid" | "shipped";
     payment?: string;
+    address: string;
+    email: string;
+    phone: string;
   }
   
   export interface UserApi {
@@ -57,128 +60,99 @@ export interface ProductApi {
     items: BasketItemUI[];
     status: string; 
   }
-//   Интерфейс API-клиента
 
-  export interface ApiClient {
-    getProducts(): Promise<ProductUI[]>;
-    addToBasket(productId: string, quantity: number): Promise<BasketItemApi[]>;
-    removeFromBasket(productId: string): Promise<BasketItemApi[]>;
-    createOrder(user: UserApi, items: BasketItemApi[]): Promise<OrderApi>; 
-    sendOrder(order: OrderApi): Promise<OrderApi>;
-  }
+// Интерфейсы компонентов
 
-// Интерфейсы модели данных
-
-  interface ProductModel {
-    setProducts(products: ProductUI[]): void;
-    getProductById(id: string): ProductUI | undefined;
-  }
-
-  interface BasketModel {
-    getBasket(): BasketItemUI[];
-    addItemToBasket(productId: string): Promise<BasketItemUI[]>; 
-    removeItemFromBasket(productId: string): Promise<BasketItemUI[]>;
-    getTotalPrice(): string;
-    clearBasket(): Promise<void>;
-  }
-  
-  interface OrderModel {
-    setOrderData(user: UserApi): void;
-    validateOrder(): string[]; 
-    getOrder(user: UserApi, basket: BasketItemUI[]): OrderUI;
-}
-
-//   Интерфейсы отображений
-
-  export interface ProductView {
-    renderProductList(products: ProductUI[]): void;
-    renderProductDetails(product: ProductUI): void;
-  }
-  
-  export interface BasketView {
+export interface BasketView {
     renderBasket(items: BasketItemUI[], total: string): void;
     showEmptyBasketMessage(): void;
-  }
-  
-  export interface OrderView {
-    renderOrderForm(): void;
-    renderSuccessMessage(order: OrderUI): void;
-    showFormErrors(errors: string[]): void;
-  }
+}
 
-  interface SuccessMessageView {
-    render(message: string): void;
-  }
-
-// Интерфейсы базовых классов
-
-  interface EventEmitter {
-    on(event: string, listener: (...args: any[]) => void): void;
-    off(event: string, listener: (...args: any[]) => void): void;
-    emit(event: string, ...args: any[]): void;
-  }
-  
-  export interface ModalData {
-    content: HTMLElement;
-  }
-  
-  interface Card {
-    renderCard(product: ProductUI): HTMLElement;
-  }
-  
-  export interface Form {
+export interface Form {
     validate(): boolean;
     getData(): Record<string, string>;
     render(): HTMLElement;
-  }
+}
 
-//  Перечисление событий и их интерфейсы
+export interface ModalData {
+    content: HTMLElement;
+}
 
-  type AppEvents =
+// События приложения
+
+export type AppEvents =
     | "product:addToBasket"
     | "basket:removeItem"
     | "basket:update"
-    | "order:submitted"
-    | "order:success";
-  
-  interface AppEventPayloads {
-    "product:addToBasket": { productId: string };
-    "basket:removeItem": { productId: string };
+    | "basket:open"
+    | "order:open"
+    | "order:submit"
+    | "order:validate"
+    | "order:field:change"
+    | "contacts:field:change"
+    | "contacts:submit"
+    | "payment:change"
+    | "formErrors:change"
+    | "modal:open"
+    | "modal:close";
+
+export interface AppEventPayloads {
     "basket:update": { items: BasketItemUI[]; total: string };
-    "order:submitted": { user: UserApi; items: BasketItemUI[] };
-    "order:success": { order: OrderUI };
-  }
-
-//   Форматировщик
-
-  export interface Formatter {
-    formatPrice(price: number): string; // Пример: 1000 -> "1 000 синапсов"
-    formatStatus(status: string): string; // Пример: "pending" -> "В обработке"
-  }
-
-//   Шаблоны для UI
-
-  interface TemplateProvider {
-    getProductCardTemplate(): HTMLElement;
-    getBasketItemTemplate(): HTMLElement;
-    getOrderSuccessTemplate(): HTMLElement;
-  }
-
-// Презентеры
-
-interface ProductPresenter {
-  showProductList(): Promise<void>;
-  showProductDetails(productId: string): Promise<void>;
+    "order:field:change": { field: string; value: string };
+    "contacts:field:change": { field: string; value: string };
+    "payment:change": HTMLButtonElement;
+    "formErrors:change": string[];
 }
 
-interface BasketPresenter {
-  showBasket(): Promise<void>;
-  handleAddToBasket(productId: string): Promise<void>;
-  handleRemoveFromBasket(productId: string): Promise<void>;
+// Интерфейсы отображений
+export interface OrderFormView {
+    payment: string;
+    address: string;
+    valid: boolean;
+    errors: string;
+    validateForm(): void;
 }
 
-interface OrderPresenter {
-  showOrderForm(): Promise<void>;
-  handleOrderSubmit(user: UserApi): Promise<void>;
-  prepareAndSendOrder(): Promise<void>; //объединить данные заказа и корзины
+export interface ContactFormView {
+    email: string;
+    phone: string;
+    valid: boolean;
+    errors: string;
+    validateForm(): void;
+}
+
+export interface SuccessView {
+    total: string;
+    render(): HTMLElement;
+}
+
+// Интерфейс API-клиента
+export interface ApiClient {
+    getProducts(): Promise<ProductUI[]>;
+    getProductById(id: string): Promise<ProductUI>;
+    orderCard(order: OrderApi): Promise<OrderUI>;
+}
+
+// Интерфейсы модели данных
+export interface ProductModel {
+    products: ProductUI[];
+    setProducts(products: ProductUI[]): void;
+    getProductById(id: string): ProductUI | undefined;
+}
+
+export interface BasketModel {
+    basket: BasketItemUI[];
+    addItemToBasket(product: ProductUI): void;
+    removeItemFromBasket(productId: string): void;
+    getTotalPrice(): string;
+    clearBasket(): void;
+}
+
+export interface OrderModel {
+    order: OrderApi;
+    user: UserApi;
+    setOrderData(data: Partial<OrderApi>): void;
+    setUserData(data: Partial<UserApi>): void;
+    validateOrder(): string[];
+    getOrder(): OrderApi;
 }

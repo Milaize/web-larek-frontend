@@ -1,5 +1,6 @@
 import { Component } from './base/Component';
 import { ensureElement } from '../utils/utils';
+import { SuccessView } from '../types';
 
 interface ISuccess {
     total: string;
@@ -9,7 +10,7 @@ interface ISuccessActions {
     onClick: () => void;
 }
 
-export class Success extends Component<ISuccess> {
+export class Success extends Component<ISuccess> implements SuccessView {
     protected _close: HTMLElement;
     protected _total: HTMLElement;
 

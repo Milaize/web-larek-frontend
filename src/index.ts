@@ -11,7 +11,7 @@ import { ProductUI, BasketItemUI } from './types';
 import { Basket } from './components/common/Basket';
 import { OrderForm } from './components/OrderForm';
 import { ContactForm } from './components/ContactForm';
-import { Success } from './components/Success';
+import { SuccessMessageView } from './components/common/Success';
 
 
 const api = new ProjectApi(API_URL);
@@ -99,22 +99,14 @@ events.on('modal:close', () => {
 events.on('card:add', (item: ProductUI) => {
     appState.addItemToBasket(item);
     events.emit('basket:update', {
-        items: appState.getBasket(),
+        items: appState.basket,
         total: appState.getTotalPrice()
     });
     modal.close();
 })
 
-// Открытие корзины, отображение товаров и суммы заказа
+// Открытие корзины
 events.on('basket:open', () => {
-    const basketItems = appState.getBasket();
-    const total = appState.getTotalPrice();
-    
-    events.emit('basket:update', {
-        items: basketItems,
-        total: total
-    });
-    
     modal.open(basketContainer);
 });
 
@@ -134,7 +126,7 @@ events.on('basket:update', (payload: { items: BasketItemUI[], total: string }) =
 events.on('card:remove', (item: BasketItemUI) => {
     appState.removeItemFromBasket(item.id);
     events.emit('basket:update', {
-        items: appState.getBasket(),
+        items: appState.basket,
         total: appState.getTotalPrice()
     });
 });
@@ -146,7 +138,7 @@ events.on('order:open', () => {
     const orderForm = new OrderForm(orderElement, events);
     
     modal.open(orderElement);
-    appState.setOrderItems(appState.getBasket().map(item => ({ 
+    appState.setOrderItems(appState.basket.map(item => ({ 
         productId: item.id, 
         quantity: item.quantity 
     })));
@@ -160,6 +152,7 @@ events.on('payment:change', (button: HTMLButtonElement) => {
 // Обработка изменений в форме заказа
 events.on('order:field:change', (data: { field: string, value: string }) => {
     appState.setOrderData({ [data.field]: data.value });
+    events.emit('order:validate');
 });
 
 // Валидация форм
@@ -179,31 +172,51 @@ events.on('order:submit', () => {
 
 // Обработка изменений в форме контактов
 events.on('contacts:field:change', (data: { field: string, value: string }) => {
-    appState.setOrderData({ ...appState.getOrder(), [data.field]: data.value });
+    appState.setUserData({ [data.field]: data.value });
+    events.emit('order:validate');
 });
 
 // Финальная отправка заказа
 events.on('contacts:submit', async () => {
     try {
-        const order = appState.getOrder();
-        await api.orderCard(order);
-        
-        appState.clearBasket();
-        events.emit('basket:update', {
-            items: appState.getBasket(),
-            total: appState.getTotalPrice()
-        });
-        
-        const successTemplate = ensureElement<HTMLTemplateElement>('#success');
-        const successElement = cloneTemplate(successTemplate);
-        const success = new Success(successElement, {
-            onClick: () => modal.close()
-        });
-        
-        success.total = appState.getTotalPrice();
-        modal.open(successElement);
-        
+        if (!appState.validateOrder().length) {
+            const orderData = appState.getOrder();
+            const result = await api.orderCard(orderData);
+            
+            const successTemplate = ensureElement<HTMLTemplateElement>('#success');
+            const successElement = cloneTemplate(successTemplate);
+            const success = new SuccessMessageView(successElement, {
+                onClick: () => {
+                    modal.close();
+                    appState.clearBasket();
+                    events.emit('basket:update', {
+                        items: appState.basket,
+                        total: appState.getTotalPrice()
+                    });
+                }
+            });
+            
+            success.render({
+                id: result.id,
+                total: result.total
+            });
+            modal.open(successElement);
+        }
     } catch (error) {
         console.error(error);
+    }
+});
+
+// Обработка ошибок формы
+events.on('formErrors:change', (errors: string[]) => {
+    const currentForm = document.querySelector('.form:not(.is-hidden)') as HTMLFormElement;
+    if (currentForm.name === 'order') {
+        const orderForm = new OrderForm(currentForm, events);
+        orderForm.valid = errors.length === 0;
+        orderForm.errors = errors.join('; ');
+    } else if (currentForm.name === 'contacts') {
+        const contactForm = new ContactForm(currentForm, events);
+        contactForm.valid = errors.length === 0;
+        contactForm.errors = errors.join('; ');
     }
 });
