@@ -21,55 +21,64 @@ export class ContactForm extends Form<IContactFormData> implements ContactFormVi
         this._phone = container.querySelector('input[name="phone"]');
         this._submit = container.querySelector('button[type="submit"]');
 
-        // Изначально деактивируем кнопку
-        if (this._submit) {
-            this._submit.disabled = true;
-        }
+        // Инициализируем начальные значения
+        events.emit('contacts:field:change', { 
+            field: 'email', 
+            value: this._email.value.trim() 
+        });
+        events.emit('contacts:field:change', { 
+            field: 'phone', 
+            value: this._phone.value.trim() 
+        });
 
-        // Создаем один общий debounced обработчик для всех изменений
-        const debouncedHandler = debounce((field: string, value: string) => {
+        // Обработчики ввода с debounce
+        const debouncedEmit = debounce((field: string, value: string) => {
             events.emit('contacts:field:change', { field, value });
-            this.validateForm();
         }, 300);
 
         this._email.addEventListener('input', () => {
-            debouncedHandler('email', this._email.value);
+            const value = this._email.value.trim();
+            console.log('Email input:', value);
+            debouncedEmit('email', value);
         });
 
-        this._phone.addEventListener('input', (e: Event) => {
-            const input = e.target as HTMLInputElement;
-            const formattedValue = formatPhoneNumber(input.value);
-            input.value = formattedValue;
-            debouncedHandler('phone', formattedValue);
+        this._phone.addEventListener('input', () => {
+            const value = this._phone.value.trim();
+            console.log('Phone input:', value);
+            debouncedEmit('phone', value);
         });
 
+        // Обработчик отправки формы
         container.addEventListener('submit', (e: Event) => {
             e.preventDefault();
             if (this.validateForm()) {
-                events.emit('contacts:submit');
+                const formData = {
+                    email: this._email.value.trim(),
+                    phone: this._phone.value.trim()
+                };
+                console.log('Submitting form with data:', formData);
+                events.emit('contacts:submit', formData);
             }
         });
-
-        this.validateForm();
     }
 
     public validateForm(): boolean {
         const errors: string[] = [];
         
-        if (!this._email.value.trim() || !this._email.validity.valid) {
-            errors.push('Введите корректный email');
+        if (!this._email.value.trim()) {
+            errors.push('Введите email');
         }
         
-        if (!this._phone.value.trim() || !this._phone.validity.valid) {
-            errors.push('Введите телефон в формате +7 (999) 999-99-99');
+        if (!this._phone.value.trim()) {
+            errors.push('Введите телефон');
         }
 
         this.valid = errors.length === 0;
         this.errors = errors.join('; ');
         
-        // Обновляем состояние кнопки в зависимости от валидности
+        // Явно управляем состоянием кнопки
         if (this._submit) {
-            this._submit.disabled = !this.valid; // Кнопка активна только если нет ошибок
+            this._submit.disabled = !this.valid;
         }
 
         return this.valid;

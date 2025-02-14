@@ -5,6 +5,7 @@ import {
   ProductUI,
   OrderApi,
   OrderUI,
+  BasketItemApi,
 } from "../types/index";
 import { ApiClient } from '../types';
 
@@ -36,16 +37,30 @@ export class ProjectApi extends Api implements ApiClient {
   }
 
   async orderCard(order: OrderApi): Promise<OrderUI> {
-    return this.post('/order', order, 'POST').then((data: OrderApi) => ({
-        id: data.id,
-        total: `${data.total} синапсов`,
-        items: data.items.map(item => ({
-            id: item.productId,
-            title: "Товар",
-            price: "0 синапсов",
-            quantity: item.quantity,
-        })),
-        status: data.status,
-    }));
+    const preparedOrder = {
+        payment: order.payment,
+        email: order.email,
+        phone: order.phone,
+        address: order.address,
+        total: order.total,
+        items: order.items.map(item => item.productId)
+    };
+
+    try {
+        const response = await this.post('/order', preparedOrder, 'POST') as OrderApi;
+        return {
+            id: response.id,
+            total: `${response.total} синапсов`,
+            items: order.items.map(item => ({
+                id: item.productId,
+                title: "Товар",
+                price: "0 синапсов",
+                quantity: item.quantity,
+            })),
+            status: order.status,
+        };
+    } catch (error) {
+        throw error;
+    }
   }
 }

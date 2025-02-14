@@ -18,6 +18,9 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
       this._total = ensureElement<HTMLElement>(".basket__price", this.container);
       this._cardTemplate = ensureElement<HTMLTemplateElement>("#card-basket");
   
+      // Изначально деактивируем кнопку
+      this._button.disabled = true;
+
       this._button.addEventListener("click", () => {
         events.emit("order:open");
       });
@@ -31,6 +34,7 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
           cardItem.setData(item);
           return card;
         }));
+        // Активируем кнопку только если есть товары
         this._button.disabled = false;
         this.setText(this._total, total);
       } else {
@@ -44,6 +48,7 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
           textContent: "Корзина пуста",
         })
       );
+      // Явно деактивируем кнопку при пустой корзине
       this._button.disabled = true;
       this.setText(this._total, "0 синапсов");
     }

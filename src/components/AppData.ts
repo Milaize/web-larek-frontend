@@ -54,13 +54,8 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
             quantity: 1 
         });
     }
-    // При любом изменении корзины эмитим событие
     this.events.emit('basket:update', {
-        items: this._basket.map((item, index) => ({
-            id: item.id,
-            title: `${index + 1}. ${item.title}`,
-            price: item.price
-        })),
+        items: this._basket,
         total: this.getTotalPrice()
     });
   }
@@ -69,11 +64,7 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
     this._basket = this._basket.filter(item => item.id !== productId);
     // При любом изменении корзины эмитим событие
     this.events.emit('basket:update', {
-        items: this._basket.map((item, index) => ({
-            id: item.id,
-            title: `${index + 1}. ${item.title}`,
-            price: item.price
-        })),
+        items: this._basket,
         total: this.getTotalPrice()
     });
   }
@@ -88,7 +79,8 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
 
   getTotalPrice(): string {
     const total = this._basket.reduce((sum, item) => {
-        const price = parseFloat(item.price) || 0; // Если цена NaN, используем 0
+        // Извлекаем числовое значение из строки цены
+        const price = parseFloat(item.price.replace(/[^\d.-]/g, ''));
         return sum + price * item.quantity;
     }, 0);
     
@@ -105,27 +97,25 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
     
     // Проверка адреса
     if (!this._user.address) {
-        errors.push('Адрес не может быть пустым');
+        errors.push('Не указан адрес');
     }
     
     // Проверка email
     if (!this._user.email) {
         errors.push('Email не может быть пустым');
-    } else if (!this._user.email.includes('@')) {
-        errors.push('Некорректный email');
     }
     
     // Проверка телефона
     if (!this._user.phone) {
         errors.push('Телефон не может быть пустым');
-    } else if (this._user.phone.length < 10) {
-        errors.push('Некорректный номер телефона');
     }
     
-    // Проверка способа оплаты
-    if (!this._order.payment) {
-        errors.push('Выберите способ оплаты');
-    }
+    console.log('Validation with data:', {
+        address: this._user.address,
+        email: this._user.email,
+        phone: this._user.phone,
+        errors: errors
+    });
     
     return errors;
   }
@@ -134,15 +124,15 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
     return {
         id: this._order.id,
         total: this._basket.reduce((sum, item) => {
-            const price = parseFloat(item.price.replace(/[^\d.-]/g, '')) || 0; // Удаляем "синапсов" из строки
+            const price = parseFloat(item.price.replace(/[^\d.-]/g, ''));
             return sum + price * item.quantity;
         }, 0),
         items: this._basket.map(item => ({
             productId: item.id,
             quantity: item.quantity
         })),
-        status: this._order.status,
-        payment: this._order.payment,
+        status: "pending",
+        payment: this._order.payment || 'card',
         address: this._user.address,
         email: this._user.email,
         phone: this._user.phone
@@ -150,7 +140,10 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
   }
 
   setOrderItems(items: BasketItemApi[]) {
-    this._order.items = items;
+    this._order.items = items.map(item => ({
+        productId: String(item.productId), // Убедимся, что id - строка
+        quantity: item.quantity
+    }));
   }
 
   setPaymentType(payment: string) {
@@ -162,7 +155,12 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
   }
 
   setUserData(data: Partial<UserApi>) {
-    this._user = { ...this._user, ...data };
-    this.emitChanges("user:updated", this._user);
+    if (data.email !== undefined || data.phone !== undefined || data.address !== undefined) {
+        this._user = { 
+            ...this._user, 
+            ...data 
+        };
+        this.emitChanges("user:updated", this._user);
+    }
   }
 }

@@ -120,6 +120,8 @@ basketButton.addEventListener('click', () => {
 events.on('basket:update', (payload: { items: BasketItemUI[], total: string }) => {
     basketCounter.textContent = String(payload.items.length);
     basket.renderBasket(payload.items, payload.total);
+    // Деактивируем кнопку корзины в шапке, если корзина пуста
+    basketButton.disabled = payload.items.length === 0;
 });
 
 // Удаление товара из корзины
@@ -151,13 +153,27 @@ events.on('payment:change', (button: HTMLButtonElement) => {
 
 // Обработка изменений в форме заказа
 events.on('order:field:change', (data: { field: string, value: string }) => {
+    if (data.field === 'address') {
+        // Сохраняем адрес в данных пользователя
+        appState.setUserData({ address: data.value });
+    }
     appState.setOrderData({ [data.field]: data.value });
     events.emit('order:validate');
+});
+
+// Обработка изменений в форме контактов
+events.on('contacts:field:change', (data: { field: string, value: string }) => {
+    if (data.value) {
+        appState.setUserData({ [data.field]: data.value });
+    }
+    const errors = appState.validateOrder();
+    events.emit('formErrors:change', errors);
 });
 
 // Валидация форм
 events.on('order:validate', () => {
     const errors = appState.validateOrder();
+    console.log('Validation errors:', errors); // Для отладки
     events.emit('formErrors:change', errors);
 });
 
@@ -170,53 +186,51 @@ events.on('order:submit', () => {
     modal.open(contactElement);
 });
 
-// Обработка изменений в форме контактов
-events.on('contacts:field:change', (data: { field: string, value: string }) => {
-    appState.setUserData({ [data.field]: data.value });
-    events.emit('order:validate');
-});
-
 // Финальная отправка заказа
 events.on('contacts:submit', async () => {
     try {
-        if (!appState.validateOrder().length) {
+        const errors = appState.validateOrder();
+        if (!errors.length) {
             const orderData = appState.getOrder();
-            const result = await api.orderCard(orderData);
-            
-            const successTemplate = ensureElement<HTMLTemplateElement>('#success');
-            const successElement = cloneTemplate(successTemplate);
-            const success = new SuccessMessageView(successElement, {
-                onClick: () => {
-                    modal.close();
-                    appState.clearBasket();
-                    events.emit('basket:update', {
-                        items: appState.basket,
-                        total: appState.getTotalPrice()
-                    });
-                }
-            });
-            
-            success.render({
-                id: result.id,
-                total: result.total
-            });
-            modal.open(successElement);
+            if (!orderData.items.length) {
+                return;
+            }
+            try {
+                const result = await api.orderCard(orderData);
+                const successTemplate = ensureElement<HTMLTemplateElement>('#success');
+                const successElement = cloneTemplate(successTemplate);
+                const success = new SuccessMessageView(successElement, {
+                    onClick: () => {
+                        modal.close();
+                        appState.clearBasket();
+                        events.emit('basket:update', {
+                            items: appState.basket,
+                            total: appState.getTotalPrice()
+                        });
+                    }
+                });
+                success.render({
+                    id: result.id,
+                    total: result.total
+                });
+                modal.open(successElement);
+            } catch (apiError) {
+                console.error('API Error:', apiError);
+            }
         }
     } catch (error) {
-        console.error(error);
+        console.error('Error:', error);
     }
 });
 
 // Обработка ошибок формы
 events.on('formErrors:change', (errors: string[]) => {
     const currentForm = document.querySelector('.form:not(.is-hidden)') as HTMLFormElement;
-    if (currentForm.name === 'order') {
-        const orderForm = new OrderForm(currentForm, events);
-        orderForm.valid = errors.length === 0;
-        orderForm.errors = errors.join('; ');
-    } else if (currentForm.name === 'contacts') {
-        const contactForm = new ContactForm(currentForm, events);
-        contactForm.valid = errors.length === 0;
-        contactForm.errors = errors.join('; ');
+    if (currentForm.name === 'contacts') {
+        const submitButton = currentForm.querySelector('button[type="submit"]') as HTMLButtonElement;
+        if (submitButton) {
+            submitButton.disabled = errors.length > 0;
+            console.log('Button state:', { disabled: errors.length > 0, errors }); // Для отладки
+        }
     }
 });
