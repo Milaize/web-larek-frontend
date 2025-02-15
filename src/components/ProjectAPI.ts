@@ -20,7 +20,7 @@ export class ProjectApi extends Api implements ApiClient {
       id: product.id,
       title: product.title,
       category: product.category,
-      price: product.price ? String(product.price) : 'Бесплатно',
+      price: product.price ? String(product.price) : 'Бесценно',
       image: `${CDN_URL}${product.image}`,
       description: product.description,
     };

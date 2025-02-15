@@ -4,6 +4,7 @@ import {EventEmitter} from "../base/events";
 import { BasketView, BasketItemUI } from "../../types/index";
 import { cloneTemplate } from "../../utils/utils";
 import { CardBasket } from "../Card";
+import { IEvents } from "../base/events";
 
 export class Basket extends Component<BasketItemUI[]> implements BasketView {
     protected _list: HTMLElement;
@@ -11,7 +12,7 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
     protected _button: HTMLButtonElement;
     protected _cardTemplate: HTMLTemplateElement;
   
-    constructor(container: HTMLElement, protected events: EventEmitter) {
+    constructor(container: HTMLElement, protected events: IEvents) {
       super(container);
       this._list = ensureElement<HTMLElement>(".basket__list", this.container);
       this._button = ensureElement<HTMLButtonElement>(".basket__button", this.container);
@@ -26,16 +27,23 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
       });
     }
   
-    renderBasket(items: BasketItemUI[], total: string): void {
+    renderBasket(items: HTMLElement[], total: string): void {
       if (items.length) {
-        this._list.replaceChildren(...items.map(item => {
-          const card = cloneTemplate(this._cardTemplate);
-          const cardItem = new CardBasket(card, this.events);
-          cardItem.setData(item);
-          return card;
-        }));
-        // Активируем кнопку только если есть товары
-        this._button.disabled = false;
+        this._list.replaceChildren(...items);
+        
+        // Проверяем, есть ли "бесценные" товары
+        const hasPricelessItems = items.some(item => 
+          item.querySelector('.card__price')?.textContent === 'Бесценно'
+        );
+        
+        // Активируем кнопку только если нет "бесценных" товаров
+        this._button.disabled = hasPricelessItems;
+        if (hasPricelessItems) {
+          this._button.title = 'Бесценные товары нельзя заказать';
+        } else {
+          this._button.title = '';
+        }
+        
         this.setText(this._total, total);
       } else {
         this.showEmptyBasketMessage();
@@ -50,36 +58,8 @@ export class Basket extends Component<BasketItemUI[]> implements BasketView {
       );
       // Явно деактивируем кнопку при пустой корзине
       this._button.disabled = true;
+      this._button.title = '';
       this.setText(this._total, "0 синапсов");
     }
-  
-    protected createBasketItem(item: BasketItemUI): HTMLElement {
-      const element = createElement<HTMLLIElement>('li', {
-        className: 'basket__item card card_compact'
-      });
-
-      element.append(
-        createElement<HTMLElement>('span', {
-          className: 'basket__item-title',
-          textContent: item.title
-        }),
-        createElement<HTMLElement>('span', {
-          className: 'basket__item-price',
-          textContent: item.price
-        }),
-        createElement<HTMLElement>('button', {
-          className: 'basket__item-delete',
-          innerHTML: '&times;'
-        })
-      );
-
-      // Добавляем обработчик удаления
-      const deleteButton = element.querySelector('.basket__item-delete');
-      deleteButton.addEventListener('click', () => {
-        this.events.emit('card:remove', item);
-      });
-
-      return element;
-    }
-  }
+}
   

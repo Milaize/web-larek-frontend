@@ -42,7 +42,7 @@ class Card extends Component<ProductUI> {
     }
 
     set price(value: string) {
-        if (value === 'Бесплатно') {
+        if (value === 'Бесценно') {
             this.setText(this._price, value);
         } else {
             this.setText(this._price, `${value} синапсов`);
@@ -52,21 +52,40 @@ class Card extends Component<ProductUI> {
 
 class CardPreview extends Card {
     protected _text: HTMLElement;
-    protected _button: HTMLElement;
+    protected _button: HTMLButtonElement;
 
-    constructor(container: HTMLElement, onClick?: () => void) {
-        super(container, onClick);
+    constructor(container: HTMLElement, events: IEvents) {
+        super(container);
         this._text = ensureElement<HTMLElement>(".card__text", container);
-        this._button = ensureElement<HTMLElement>(".card__button", container);
+        this._button = ensureElement<HTMLButtonElement>(".card__button", container);
 
-        if (onClick) {
-            container.removeEventListener("click", onClick);
-            this._button.addEventListener("click", onClick);
-        }
+        this._button.addEventListener('click', () => {
+            events.emit('card:add', this.data);
+        });
     }
 
     set text(value: string) {
         this.setText(this._text, value);
+    }
+
+    private data: ProductUI;
+
+    setData(product: ProductUI, isInBasket: boolean): void {
+        this.data = product;
+        this.title = product.title;
+        this.image = product.image;
+        this.text = product.description || 'Описание отсутствует';
+        this.price = String(product.price);
+        this.category = product.category;
+
+        // Обновляем состояние кнопки
+        if (isInBasket) {
+            this._button.textContent = 'В корзине';
+            this._button.disabled = true;
+        } else {
+            this._button.textContent = 'В корзину';
+            this._button.disabled = false;
+        }
     }
 }
 
@@ -98,7 +117,7 @@ class CardBasket extends Component<BasketItemUI> {
     }
 
     set price(value: string) {
-        if (value === 'Бесплатно') {
+        if (value === 'Бесценно') {
             this.setText(this._price, value);
         } else {
             this.setText(this._price, value);

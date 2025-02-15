@@ -25,9 +25,10 @@ export class Modal extends Component<ModalData>  {
   }
 
   close() {
+    const successWindow = this._content.querySelector('.order-success');
     this.container.classList.remove("modal_active");
     this._content.innerHTML = "";
-    this.events.emit("modal:close");
+    this.events.emit("modal:close", { success: !!successWindow });
   }
 }
 

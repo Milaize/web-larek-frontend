@@ -64,7 +64,7 @@ export interface ProductApi {
 // Интерфейсы компонентов
 
 export interface BasketView {
-    renderBasket(items: BasketItemUI[], total: string): void;
+    renderBasket(items: HTMLElement[], total: string): void;
     showEmptyBasketMessage(): void;
 }
 

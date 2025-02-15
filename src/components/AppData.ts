@@ -50,7 +50,7 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
         this._basket.push({ 
             id: product.id, 
             title: product.title, 
-            price: product.price === 'Бесплатно' ? product.price : `${product.price} синапсов`,
+            price: product.price === 'Бесценно' ? product.price : `${product.price} синапсов`,
             quantity: 1 
         });
     }
@@ -79,12 +79,15 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
 
   getTotalPrice(): string {
     const total = this._basket.reduce((sum, item) => {
-        // Извлекаем числовое значение из строки цены
+        // Если товар "бесценный", не добавляем его стоимость
+        if (item.price === 'Бесценно') {
+            return sum;
+        }
         const price = parseFloat(item.price.replace(/[^\d.-]/g, ''));
         return sum + price * item.quantity;
     }, 0);
-    
-    return `${total.toFixed(2)} синапсов`;
+
+    return `${total} синапсов`;
   }
 
   setOrderData(data: Partial<OrderApi>) {
@@ -123,10 +126,7 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
   getOrder(): OrderApi {
     return {
         id: this._order.id,
-        total: this._basket.reduce((sum, item) => {
-            const price = parseFloat(item.price.replace(/[^\d.-]/g, ''));
-            return sum + price * item.quantity;
-        }, 0),
+        total: parseFloat(this.getTotalPrice().replace(/[^\d.-]/g, '')),
         items: this._basket.map(item => ({
             productId: item.id,
             quantity: item.quantity
@@ -162,5 +162,9 @@ export class AppData extends Model<AppData> implements ProductModel, BasketModel
         };
         this.emitChanges("user:updated", this._user);
     }
+  }
+
+  isInBasket(productId: string): boolean {
+    return this._basket.some(item => item.id === productId);
   }
 }
