@@ -87,6 +87,7 @@ export type AppEvents =
     | "basket:open"
     | "order:open"
     | "order:submit"
+    | "order:success"
     | "order:validate"
     | "order:field:change"
     | "contacts:field:change"

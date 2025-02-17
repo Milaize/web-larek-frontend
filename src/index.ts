@@ -41,15 +41,19 @@ const successElement = cloneTemplate(successTemplate);
 const success = new SuccessMessageView(successElement, {
     onClick: () => {
         modal.close();
-        appState.clearBasket();
-        events.emit('basket:update', {
-            items: appState.basket,
-            total: appState.getTotalPrice()
-        });
     }
 });
 
-// Обработчик события обновления продуктов
+// В начале файла после инициализации других компонентов
+const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
+const orderElement = cloneTemplate(orderTemplate) as HTMLFormElement;
+const orderForm = new OrderForm(orderElement, events);
+
+const contactTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+const contactElement = cloneTemplate(contactTemplate) as HTMLFormElement;
+const contactForm = new ContactForm(contactElement, events);
+
+// Динамические экземпляры создаются для каждого элемента
 events.on('products:updated', (products: ProductUI[]) => {
     const cardElements = products.map(product => {
         const cardElement = cloneTemplate(cardCatalogTemplate);
@@ -99,16 +103,8 @@ events.on('modal:open', () => {
 });
 
 // Разблокировка прокрутки страницы при закрытии модального окна
-events.on('modal:close', (data: { success: boolean }) => {
+events.on('modal:close', () => {
     page.locked = false;
-    
-    if (data.success) {
-        appState.clearBasket();
-        events.emit('basket:update', {
-            items: appState.basket,
-            total: appState.getTotalPrice()
-        });
-    }
 });
 
 //Добавление товара в заказ и корзину, обновление счетчика корзины на главной страницы
@@ -135,12 +131,8 @@ events.on('card:remove', (item: BasketItemUI) => {
     });
 });
 
-// Открытие формы доставки
+// Изменим обработчик открытия формы заказа
 events.on('order:open', () => {
-    const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
-    const orderElement = cloneTemplate(orderTemplate) as HTMLFormElement;
-    const orderForm = new OrderForm(orderElement, events);
-    
     modal.open(orderElement);
     appState.setOrderItems(appState.basket.map(item => ({ 
         productId: item.id, 
@@ -179,12 +171,8 @@ events.on('order:validate', () => {
     events.emit('formErrors:change', errors);
 });
 
-// Отправка заказа и переход к контактам
+// Изменим обработчик отправки заказа
 events.on('order:submit', () => {
-    const contactTemplate = ensureElement<HTMLTemplateElement>('#contacts');
-    const contactElement = cloneTemplate(contactTemplate) as HTMLFormElement;
-    const contactForm = new ContactForm(contactElement, events);
-    
     modal.open(contactElement);
 });
 
@@ -204,6 +192,25 @@ events.on('contacts:submit', async () => {
                     total: result.total
                 });
                 modal.open(successElement);
+                appState.clearBasket();
+                events.emit('basket:update', {
+                    items: appState.basket,
+                    total: appState.getTotalPrice()
+                });
+                
+                orderForm.render({
+                    payment: '',
+                    address: '',
+                    valid: false,
+                    errors: []
+                });
+                
+                contactForm.render({
+                    email: '',
+                    phone: '',
+                    valid: false,
+                    errors: []
+                });
             } catch (apiError) {
                 console.error('API Error:', apiError);
             }
@@ -227,6 +234,8 @@ events.on('formErrors:change', (errors: string[]) => {
 
 // Обновление корзины
 events.on('basket:update', (payload: { items: BasketItemUI[], total: string }) => {
+    page.counter = payload.items.length;
+    page.setBasketDisabled(payload.items.length === 0);
     const cardElements = payload.items.map(item => {
         const card = cloneTemplate(cardBasketTemplate);
         const cardItem = new CardBasket(card, events);
@@ -235,4 +244,9 @@ events.on('basket:update', (payload: { items: BasketItemUI[], total: string }) =
     });
     
     basket.renderBasket(cardElements, payload.total);
+});
+
+// Добавим обработчик успешного оформления заказа
+events.on('order:success', () => {
+    modal.close();
 });

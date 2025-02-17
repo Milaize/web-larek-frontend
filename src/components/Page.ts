@@ -34,12 +34,6 @@ export class Page extends Component<IPage> {
     this._basket.addEventListener('click', () => {
       this.events.emit('basket:open');
     });
-
-    // Подписываемся на обновление корзины
-    this.events.on('basket:update', (payload: { items: unknown[], total: string }) => {
-      this.counter = payload.items.length;
-      this._basket.disabled = payload.items.length === 0;
-    });
   }
 
   // Сеттер для счётчика товаров в корзине
@@ -54,5 +48,9 @@ export class Page extends Component<IPage> {
     } else {
       this._wrapper.classList.remove('page__wrapper_locked');
     }
+  }
+
+  setBasketDisabled(value: boolean) {
+    this._basket.disabled = value;
   }
 }
